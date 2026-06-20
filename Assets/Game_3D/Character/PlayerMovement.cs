@@ -1,6 +1,8 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using TMPro; 
+using UnityEngine.UI; 
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -14,15 +16,33 @@ public class PlayerMovement : MonoBehaviour
 
     public GameObject attackEffectPrefab; 
     public Transform effectSpawnPoint;
-    public float effectScale = 0.5f; // <--- THÊM BIẾN NÀY: 0.5f nghĩa là nhỏ bằng một nửa gốc
+    public float effectScale = 0.5f; 
+
+    public TrailRenderer dashTrail; 
+
+    [Header("Item UI")]
+    public TextMeshProUGUI coinText;
+    public TextMeshProUGUI crystalText;
+    public TextMeshProUGUI keyText;
+
+    [Header("Skill Cooldown UI")] 
+    public Image skillCooldownImage;      
+    public TextMeshProUGUI skillCooldownText; 
+
+    [Header("Heart Health UI")] 
+    public Image[] heartFills; 
+
+    [Header("Win UI")] // <--- THÊM BIẾN CHỨA TEXT MÀN HÌNH WIN TẠI ĐÂY
+    public GameObject winTextObject; // Kéo đối tượng WinText vào đây
 
     public float attackDelay = 0.08f;
     public float attackCooldown = 0.14f;
 
     public float fallThreshold = -10f;
-    public int maxHealth = 3;
+    public int maxHealth = 6; 
     public int currentHealth;
     private bool isDead = false;
+    private bool isWon = false; // Biến trạng thái để chặn di chuyển khi đã thắng
 
     public int coinCount = 0;
     public int starCount = 0;
@@ -62,14 +82,49 @@ public class PlayerMovement : MonoBehaviour
         animator = GetComponent<Animator>();
         rb = GetComponent<Rigidbody>();
         currentHealth = maxHealth;
+        
         if (skillHitbox != null) skillHitbox.enabled = false;
+        if (dashTrail != null) dashTrail.emitting = false; 
+        
+        if (skillCooldownImage != null) skillCooldownImage.fillAmount = 0f;
+        if (skillCooldownText != null) skillCooldownText.gameObject.SetActive(false);
+        
+        // Luôn đảm bảo ẩn chữ Win khi mới bắt đầu game
+        if (winTextObject != null) winTextObject.SetActive(false);
+        
         if (Camera.main != null) mainCamera = Camera.main.transform;
+        
+        UpdateUI(); 
+        UpdateHeartUI(); 
     }
 
     void Update()
     {
-        if (isDead) return;
+        if (isDead || isWon) return; // Nếu đã chết hoặc đã thắng thì không cho thao tác nữa
         if (transform.position.y < fallThreshold) { Die(); return; }
+
+        // --- XỬ LÝ ĐẾM NGƯỢC HỒI CHIÊU SKILL TRÊN UI ---
+        if (Time.time < lastSkillTime + skillCooldown)
+        {
+            float timeRemaining = (lastSkillTime + skillCooldown) - Time.time;
+
+            if (skillCooldownImage != null)
+            {
+                skillCooldownImage.fillAmount = timeRemaining / skillCooldown;
+            }
+
+            if (skillCooldownText != null)
+            {
+                skillCooldownText.gameObject.SetActive(true);
+                skillCooldownText.text = timeRemaining.ToString("F0");
+            }
+        }
+        else
+        {
+            if (skillCooldownImage != null) skillCooldownImage.fillAmount = 0f;
+            if (skillCooldownText != null) skillCooldownText.gameObject.SetActive(false);
+        }
+        // -----------------------------------------------
 
         float verticalInput = Input.GetAxis("Vertical");
         float horizontalInput = Input.GetAxis("Horizontal");
@@ -108,7 +163,7 @@ public class PlayerMovement : MonoBehaviour
         } else { idleTimer = 0f; }
 
         float targetSpeed = isMoving ? (isRunning ? 1.0f : 0.5f) : 0f;
-        animator.SetFloat(AnimatorParamSpeed, targetSpeed);
+        if (animator != null) animator.SetFloat(AnimatorParamSpeed, targetSpeed);
 
         if (movementDirection.magnitude > 1f) movementDirection.Normalize();
         transform.Translate(movementDirection * speed * (isRunning ? 1.5f : 1f) * Time.deltaTime, Space.World);
@@ -146,13 +201,11 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // --- HÀM GỌI TỪ ANIMATION EVENT ---
     public void PlayAttackEffect()
     {
         if (attackEffectPrefab != null && effectSpawnPoint != null)
         {
             GameObject effect = Instantiate(attackEffectPrefab, effectSpawnPoint.position, effectSpawnPoint.rotation);
-            // Áp dụng kích thước vào đây
             effect.transform.localScale = new Vector3(effectScale, effectScale, effectScale);
         }
     }
@@ -161,10 +214,16 @@ public class PlayerMovement : MonoBehaviour
     {
         isUsingSkill = true;
         lastSkillTime = Time.time;
+        
         SetAnimatorTrigger(AnimatorParamSkillTrigger);
         if (skillHitbox != null) skillHitbox.enabled = true;
+        if (dashTrail != null) dashTrail.emitting = true; 
+        
         yield return StartCoroutine(SkillMovementRoutine());
+        
         if (skillHitbox != null) skillHitbox.enabled = false;
+        if (dashTrail != null) dashTrail.emitting = false; 
+        
         isUsingSkill = false;
     }
 
@@ -185,15 +244,60 @@ public class PlayerMovement : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Ladder")) { isClimbing = true; rb.useGravity = false; rb.velocity = Vector3.zero; }
-        if (other.CompareTag("Coin")) { coinCount++; Destroy(other.gameObject); }
-        else if (other.CompareTag("Star")) { starCount++; Destroy(other.gameObject); CheckWinCondition(); }
-        else if (other.CompareTag("Crystal")) { crystalCount++; Destroy(other.gameObject); CheckWinCondition(); }
-        else if (other.CompareTag("Key")) { keyCount++; Destroy(other.gameObject); CheckWinCondition(); }
         
+        if (other.CompareTag("Coin")) { coinCount++; Destroy(other.gameObject); UpdateUI(); }
+        else if (other.CompareTag("Star")) { starCount++; Destroy(other.gameObject); }
+        else if (other.CompareTag("Crystal")) { crystalCount++; Destroy(other.gameObject); UpdateUI(); }
+        else if (other.CompareTag("Key")) { keyCount++; Destroy(other.gameObject); UpdateUI(); }
+        
+        // --- XỬ LÝ CHẠM VÀO CỘT CỜ CHIẾN THẮNG ---
+        if (other.CompareTag("Finish"))
+        {
+            if (CheckWinCondition())
+            {
+                WinGame();
+            }
+            else
+            {
+                Debug.Log("Chưa đủ vật phẩm để qua màn! Cần: 20 xu, 2 pha lê, 1 chìa khóa.");
+            }
+        }
+
         if (isUsingSkill && other.CompareTag("Enemy"))
         {
             other.SendMessage("TakeDamage", skillDamage, SendMessageOptions.DontRequireReceiver);
         }
+    }
+
+    private void UpdateUI()
+    {
+        if (coinText != null) coinText.text = coinCount.ToString() + "/20";
+        if (crystalText != null) crystalText.text = crystalCount.ToString() + "/2";
+        if (keyText != null) keyText.text = keyCount.ToString() + "/1";
+    }
+
+    private void UpdateHeartUI()
+    {
+        for (int i = 0; i < heartFills.Length; i++)
+        {
+            if (heartFills[i] != null)
+            {
+                heartFills[i].gameObject.SetActive(i < currentHealth);
+            }
+        }
+    }
+
+    private void WinGame()
+    {
+        isWon = true;
+        rb.velocity = Vector3.zero; // Dừng mọi lực vật lý
+        if (animator != null) animator.SetFloat(AnimatorParamSpeed, 0f); // Đưa Kat về trạng thái Idle
+        
+        if (winTextObject != null)
+        {
+            winTextObject.SetActive(true); // Hiện chữ chiến thắng lên màn hình
+        }
+        Debug.Log("🎉 CHÚC MỪNG! BẠN ĐÃ QUA MÀN THÀNH CÔNG! 🎉");
     }
 
     private void OnTriggerStay(Collider other) { if (other.CompareTag("Ladder")) { isClimbing = true; rb.useGravity = false; rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z); } }
@@ -201,10 +305,26 @@ public class PlayerMovement : MonoBehaviour
     private bool HasAnimatorParameter(string parameterName) { if (animator == null) return false; foreach (AnimatorControllerParameter param in animator.parameters) if (param.name == parameterName) return true; return false; }
     private void SetAnimatorBool(string parameterName, bool value) { if (animator == null) return; if (HasAnimatorParameter(parameterName)) animator.SetBool(parameterName, value); }
     private void SetAnimatorTrigger(string parameterName) { if (animator == null) return; if (HasAnimatorParameter(parameterName)) animator.SetTrigger(parameterName); }
-    public void TakeDamage(int damage) { if (isDead) return; currentHealth -= damage; SetAnimatorTrigger(AnimatorParamHitTrigger); if (currentHealth <= 0) Die(); }
+    
+    public void TakeDamage(int damage) 
+    { 
+        if (isDead || isWon) return; 
+        currentHealth -= damage; 
+        
+        UpdateHeartUI(); 
+        
+        SetAnimatorTrigger(AnimatorParamHitTrigger); 
+        if (currentHealth <= 0) Die(); 
+    }
+
     private void Die() { isDead = true; SetAnimatorTrigger(AnimatorParamDeathTrigger); StartCoroutine(RestartGameRoutine()); }
     private IEnumerator RestartGameRoutine() { yield return new WaitForSeconds(2f); SceneManager.LoadScene(SceneManager.GetActiveScene().name); }
     private IEnumerator ActivateHitbox() { isAttacking = true; yield return new WaitForSeconds(attackDelay); punchHitbox.enabled = true; yield return new WaitForSeconds(0.2f); punchHitbox.enabled = false; yield return new WaitForSeconds(attackCooldown); isAttacking = false; }
     private void OnCollisionEnter(Collision collision) { isGrounded = true; }
-    private void CheckWinCondition() { if (starCount >= 1 && crystalCount >= 3 && keyCount >= 1) Debug.Log("🎉 CHÚC MỪNG! BẠN ĐÃ ĐỦ ĐIỀU KIỆN QUA MÀN! 🎉"); }
+    
+    // Đã chuyển thành hàm bool để trả kết quả kiểm tra điều kiện
+    private bool CheckWinCondition() 
+    { 
+        return coinCount >= 20 && crystalCount >= 2 && keyCount >= 1;
+    }
 }

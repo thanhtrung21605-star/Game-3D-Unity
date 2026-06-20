@@ -75,7 +75,9 @@
     <Compile Include="Assets\Game_3D\Character\LeverInteractor.cs" />
     <Compile Include="Assets\Game_3D\Bitgem\StylisedWater\URP\Scripts\Bitgem\VFX\StylisedWater\WateverVolumeFloater.cs" />
     <Compile Include="Assets\Game_3D\Bitgem\StylisedWater\URP\Scripts\Bitgem\VFX\StylisedWater\WaterVolumeHelper.cs" />
+    <Compile Include="Assets\IgniteCoders\Simple Water Shader\Info\Scripts\Readme.cs" />
     <Compile Include="Assets\Game_3D\CameraFollow\CameraFollow.cs" />
+    <Compile Include="Assets\IgniteCoders\Simple Water Shader\Resources\WaterReflection.cs" />
     <Compile Include="Assets\Game_3D\Script\SpikeTrap.cs" />
     <Compile Include="Assets\Game_3D\Script\WinFlag.cs" />
     <Compile Include="Assets\Game_3D\Script\Lever.cs" />
