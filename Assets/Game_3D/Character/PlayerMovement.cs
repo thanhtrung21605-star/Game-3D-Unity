@@ -6,11 +6,18 @@ public class PlayerMovement : MonoBehaviour
 {
     public float speed = 5f;
     public float jumpForce = 6f;
-    public float climbSpeed = 3f; // Tốc độ leo
+    public float climbSpeed = 3f;
 
     public Collider punchHitbox;
-    public float attackDelay = 0.08f; // Delay trước khi hitbox gây damage
-    public float attackCooldown = 0.14f; // Thời gian hồi trước khi đánh lại, có thể điều chỉnh trong Inspector
+    public Collider skillHitbox; 
+    public int skillDamage = 3; 
+
+    public GameObject attackEffectPrefab; 
+    public Transform effectSpawnPoint;
+    public float effectScale = 0.5f; // <--- THÊM BIẾN NÀY: 0.5f nghĩa là nhỏ bằng một nửa gốc
+
+    public float attackDelay = 0.08f;
+    public float attackCooldown = 0.14f;
 
     public float fallThreshold = -10f;
     public int maxHealth = 3;
@@ -22,11 +29,24 @@ public class PlayerMovement : MonoBehaviour
     public int crystalCount = 0;
     public int keyCount = 0;
 
+    private float idleTimer = 0f;
+    public float timeToWait = 5f; 
+    private const string AnimatorParamIdle2Trigger = "PlayIdle2";
+    
+    private bool isRunning = false;
+    private float lastTapTime = 0f;
+    private float doubleTapThreshold = 0.3f;
+    private const string AnimatorParamSpeed = "Speed";
+
+    private bool isUsingSkill = false;
+    private float lastSkillTime = -10f; 
+    public float skillCooldown = 7f;
+
     private Animator animator;
     private Rigidbody rb;
     private bool isGrounded = true;
     private bool isAttacking = false;
-    private bool isClimbing = false; // Trạng thái leo thang
+    private bool isClimbing = false;
 
     private Transform mainCamera;
 
@@ -35,54 +55,66 @@ public class PlayerMovement : MonoBehaviour
     private const string AnimatorParamAttackTrigger = "AttackTrigger";
     private const string AnimatorParamHitTrigger = "HitTrigger";
     private const string AnimatorParamDeathTrigger = "DeathTrigger";
+    private const string AnimatorParamSkillTrigger = "SpecialSkillTrigger"; 
 
     void Start()
     {
         animator = GetComponent<Animator>();
         rb = GetComponent<Rigidbody>();
         currentHealth = maxHealth;
+        if (skillHitbox != null) skillHitbox.enabled = false;
         if (Camera.main != null) mainCamera = Camera.main.transform;
     }
 
     void Update()
     {
         if (isDead) return;
+        if (transform.position.y < fallThreshold) { Die(); return; }
 
-        if (transform.position.y < fallThreshold)
-        {
-            Die();
-            return;
-        }
-
-        // --- XỬ LÝ LEO THANG ---
         float verticalInput = Input.GetAxis("Vertical");
+        float horizontalInput = Input.GetAxis("Horizontal");
+
+        if (isUsingSkill) return; 
+
         if (isClimbing)
         {
             rb.velocity = new Vector3(rb.velocity.x, verticalInput * climbSpeed, rb.velocity.z);
-            return; // Dừng các logic bên dưới khi đang leo
+            return;
         }
 
-        // --- DI CHUYỂN BÌNH THƯỜNG ---
-        float horizontalInput = Input.GetAxis("Horizontal");
+        bool isMoving = (horizontalInput != 0 || verticalInput != 0);
+        if (!isMoving) isRunning = false;
+
+        if (Input.GetKeyDown(KeyCode.W))
+        {
+            if (Time.time - lastTapTime <= doubleTapThreshold) isRunning = !isRunning;
+            lastTapTime = Time.time;
+        }
 
         Vector3 movementDirection = Vector3.zero;
         if (mainCamera != null)
         {
             Vector3 cameraForward = mainCamera.forward;
             Vector3 cameraRight = mainCamera.right;
-            cameraForward.y = 0f;
-            cameraRight.y = 0f;
-            cameraForward.Normalize();
-            cameraRight.Normalize();
+            cameraForward.y = 0f; cameraRight.y = 0f;
+            cameraForward.Normalize(); cameraRight.Normalize();
             movementDirection = (cameraForward * verticalInput) + (cameraRight * horizontalInput);
         }
 
+        if (!isMoving && isGrounded)
+        {
+            idleTimer += Time.deltaTime;
+            if (idleTimer >= timeToWait) { SetAnimatorTrigger(AnimatorParamIdle2Trigger); idleTimer = 0f; }
+        } else { idleTimer = 0f; }
+
+        float targetSpeed = isMoving ? (isRunning ? 1.0f : 0.5f) : 0f;
+        animator.SetFloat(AnimatorParamSpeed, targetSpeed);
+
         if (movementDirection.magnitude > 1f) movementDirection.Normalize();
-        transform.Translate(movementDirection * speed * Time.deltaTime, Space.World);
+        transform.Translate(movementDirection * speed * (isRunning ? 1.5f : 1f) * Time.deltaTime, Space.World);
 
         if (movementDirection != Vector3.zero) transform.forward = movementDirection;
 
-        bool isMoving = (horizontalInput != 0 || verticalInput != 0);
         SetAnimatorBool(AnimatorParamIsRunning, isMoving);
 
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
@@ -98,129 +130,81 @@ public class PlayerMovement : MonoBehaviour
             if (punchHitbox != null) StartCoroutine(ActivateHitbox());
         }
 
-        if (Input.GetKeyDown(KeyCode.E)) // Nhấn E để gạt
-    {
-        RaycastHit hit;
-        if (Physics.Raycast(transform.position, transform.forward, out hit, 2f))
+        if (Input.GetKeyDown(KeyCode.E))
         {
-            Lever lever = hit.collider.GetComponent<Lever>();
-            if (lever != null) lever.Interact();
+            RaycastHit hit;
+            if (Physics.Raycast(transform.position, transform.forward, out hit, 2f))
+            {
+                Lever lever = hit.collider.GetComponent<Lever>();
+                if (lever != null) lever.Interact();
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.Q) && !isUsingSkill && Time.time >= lastSkillTime + skillCooldown)
+        {
+            StartCoroutine(SkillSequence());
         }
     }
+
+    // --- HÀM GỌI TỪ ANIMATION EVENT ---
+    public void PlayAttackEffect()
+    {
+        if (attackEffectPrefab != null && effectSpawnPoint != null)
+        {
+            GameObject effect = Instantiate(attackEffectPrefab, effectSpawnPoint.position, effectSpawnPoint.rotation);
+            // Áp dụng kích thước vào đây
+            effect.transform.localScale = new Vector3(effectScale, effectScale, effectScale);
+        }
     }
 
-    // --- PHẦN XỬ LÝ LEO THANG (TRIGGER) ---
+    private IEnumerator SkillSequence()
+    {
+        isUsingSkill = true;
+        lastSkillTime = Time.time;
+        SetAnimatorTrigger(AnimatorParamSkillTrigger);
+        if (skillHitbox != null) skillHitbox.enabled = true;
+        yield return StartCoroutine(SkillMovementRoutine());
+        if (skillHitbox != null) skillHitbox.enabled = false;
+        isUsingSkill = false;
+    }
+
+    private IEnumerator SkillMovementRoutine()
+    {
+        float duration = 0.4f; 
+        float distance = 2.5f; 
+        Vector3 direction = transform.forward;
+        float elapsed = 0;
+        while (elapsed < duration)
+        {
+            transform.position += direction * (distance / duration) * Time.deltaTime;
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+    }
+
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Ladder"))
-        {
-            isClimbing = true;
-            rb.useGravity = false; // Tắt trọng lực để không bị rơi khi leo
-            rb.velocity = Vector3.zero;
-        }
-
+        if (other.CompareTag("Ladder")) { isClimbing = true; rb.useGravity = false; rb.velocity = Vector3.zero; }
         if (other.CompareTag("Coin")) { coinCount++; Destroy(other.gameObject); }
         else if (other.CompareTag("Star")) { starCount++; Destroy(other.gameObject); CheckWinCondition(); }
         else if (other.CompareTag("Crystal")) { crystalCount++; Destroy(other.gameObject); CheckWinCondition(); }
         else if (other.CompareTag("Key")) { keyCount++; Destroy(other.gameObject); CheckWinCondition(); }
-    }
-
-    private void OnTriggerStay(Collider other)
-    {
-        if (other.CompareTag("Ladder"))
+        
+        if (isUsingSkill && other.CompareTag("Enemy"))
         {
-            isClimbing = true;
-            rb.useGravity = false; // Tắt trọng lực để không bị rơi khi leo
-            rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
+            other.SendMessage("TakeDamage", skillDamage, SendMessageOptions.DontRequireReceiver);
         }
     }
 
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.CompareTag("Ladder"))
-        {
-            isClimbing = false;
-            rb.useGravity = true; // Bật lại trọng lực khi rời thang
-        }
-    }
-
-    private bool HasAnimatorParameter(string parameterName)
-    {
-        if (animator == null) return false;
-        foreach (AnimatorControllerParameter param in animator.parameters)
-        {
-            if (param.name == parameterName) return true;
-        }
-        return false;
-    }
-
-    private void SetAnimatorBool(string parameterName, bool value)
-    {
-        if (animator == null) return;
-        if (HasAnimatorParameter(parameterName))
-        {
-            animator.SetBool(parameterName, value);
-        }
-        else
-        {
-                Debug.LogWarning($"Animator parameter '{parameterName}' not found on '{gameObject.name}'. Add it to the Animator controller.");
-        }
-    }
-
-    private void SetAnimatorTrigger(string parameterName)
-    {
-        if (animator == null) return;
-        if (HasAnimatorParameter(parameterName))
-        {
-            animator.SetTrigger(parameterName);
-        }
-        else
-        {
-            Debug.LogWarning($"Animator parameter '{parameterName}' not found on '{gameObject.name}'. Add it to the Animator controller.");
-        }
-    }
-
-    // --- CÁC HÀM CŨ GIỮ NGUYÊN ---
-    public void TakeDamage(int damage)
-    {
-        if (isDead) return;
-        currentHealth -= damage;
-        SetAnimatorTrigger(AnimatorParamHitTrigger);
-        if (currentHealth <= 0) Die();
-    }
-
-    private void Die()
-    {
-        isDead = true;
-        SetAnimatorTrigger(AnimatorParamDeathTrigger);
-        StartCoroutine(RestartGameRoutine());
-    }
-
-    private IEnumerator RestartGameRoutine()
-    {
-        yield return new WaitForSeconds(2f);
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-    }
-
-    private IEnumerator ActivateHitbox()
-    {
-        isAttacking = true;
-        yield return new WaitForSeconds(attackDelay);
-        punchHitbox.enabled = true;
-        yield return new WaitForSeconds(0.2f);
-        punchHitbox.enabled = false;
-        yield return new WaitForSeconds(attackCooldown);
-        isAttacking = false;
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        isGrounded = true;
-    }
-
-    private void CheckWinCondition()
-    {
-        if (starCount >= 1 && crystalCount >= 3 && keyCount >= 1)
-            Debug.Log("🎉 CHÚC MỪNG! BẠN ĐÃ ĐỦ ĐIỀU KIỆN QUA MÀN! 🎉");
-    }
+    private void OnTriggerStay(Collider other) { if (other.CompareTag("Ladder")) { isClimbing = true; rb.useGravity = false; rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z); } }
+    private void OnTriggerExit(Collider other) { if (other.CompareTag("Ladder")) { isClimbing = false; rb.useGravity = true; } }
+    private bool HasAnimatorParameter(string parameterName) { if (animator == null) return false; foreach (AnimatorControllerParameter param in animator.parameters) if (param.name == parameterName) return true; return false; }
+    private void SetAnimatorBool(string parameterName, bool value) { if (animator == null) return; if (HasAnimatorParameter(parameterName)) animator.SetBool(parameterName, value); }
+    private void SetAnimatorTrigger(string parameterName) { if (animator == null) return; if (HasAnimatorParameter(parameterName)) animator.SetTrigger(parameterName); }
+    public void TakeDamage(int damage) { if (isDead) return; currentHealth -= damage; SetAnimatorTrigger(AnimatorParamHitTrigger); if (currentHealth <= 0) Die(); }
+    private void Die() { isDead = true; SetAnimatorTrigger(AnimatorParamDeathTrigger); StartCoroutine(RestartGameRoutine()); }
+    private IEnumerator RestartGameRoutine() { yield return new WaitForSeconds(2f); SceneManager.LoadScene(SceneManager.GetActiveScene().name); }
+    private IEnumerator ActivateHitbox() { isAttacking = true; yield return new WaitForSeconds(attackDelay); punchHitbox.enabled = true; yield return new WaitForSeconds(0.2f); punchHitbox.enabled = false; yield return new WaitForSeconds(attackCooldown); isAttacking = false; }
+    private void OnCollisionEnter(Collision collision) { isGrounded = true; }
+    private void CheckWinCondition() { if (starCount >= 1 && crystalCount >= 3 && keyCount >= 1) Debug.Log("🎉 CHÚC MỪNG! BẠN ĐÃ ĐỦ ĐIỀU KIỆN QUA MÀN! 🎉"); }
 }
