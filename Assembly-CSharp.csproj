@@ -57,11 +57,11 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\2022.3.0f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\VFX\Matthew Guz\Slash Effects FREE\Scripts\CameraRotation.cs" />
     <Compile Include="Assets\VFX\VFXPACK_IMPACT_WALLCOEUR_FreeVersion\Scripts\DropdownController.cs" />
     <Compile Include="Assets\Game_3D\Bitgem\StylisedWater\URP\Scripts\Bitgem\VFX\StylisedWater\WaterVolumeBase.cs" />
     <Compile Include="Assets\Game_3D\Script\Ladder.cs" />
     <Compile Include="Assets\Game_3D\Script\SpringPlatform.cs" />
-    <Compile Include="Assets\VFX\NamuFX\_CommonAssets\Scripts\Viewer.cs" />
     <Compile Include="Assets\Game_3D\Script\Coin.cs" />
     <Compile Include="Assets\Game_3D\Script\CloudMover.cs" />
     <Compile Include="Assets\VFX\VFXPACK_IMPACT_WALLCOEUR_FreeVersion\Scripts\VfxController.cs" />
@@ -70,14 +70,13 @@
     <Compile Include="Assets\Game_3D\Bitgem\StylisedWater\URP\Scripts\Bitgem\Core\FlagEnumAttribute.cs" />
     <Compile Include="Assets\Game_3D\Enemy Mushnub Evolved\Mushnub_EvolvedAI.cs" />
     <Compile Include="Assets\Game_3D\Script\ObjectMover.cs" />
+    <Compile Include="Assets\VFX\Matthew Guz\Slash Effects FREE\Scripts\Prefab Manager.cs" />
     <Compile Include="Assets\Game_3D\Enemy Crab\CrabAI.cs" />
     <Compile Include="Assets\Game_3D\Bitgem\StylisedWater\URP\Scripts\Bitgem\VFX\StylisedWater\WaterVolumeTransforms.cs" />
     <Compile Include="Assets\Game_3D\Character\LeverInteractor.cs" />
     <Compile Include="Assets\Game_3D\Bitgem\StylisedWater\URP\Scripts\Bitgem\VFX\StylisedWater\WateverVolumeFloater.cs" />
     <Compile Include="Assets\Game_3D\Bitgem\StylisedWater\URP\Scripts\Bitgem\VFX\StylisedWater\WaterVolumeHelper.cs" />
-    <Compile Include="Assets\IgniteCoders\Simple Water Shader\Info\Scripts\Readme.cs" />
     <Compile Include="Assets\Game_3D\CameraFollow\CameraFollow.cs" />
-    <Compile Include="Assets\IgniteCoders\Simple Water Shader\Resources\WaterReflection.cs" />
     <Compile Include="Assets\Game_3D\Script\SpikeTrap.cs" />
     <Compile Include="Assets\Game_3D\Script\WinFlag.cs" />
     <Compile Include="Assets\Game_3D\Script\Lever.cs" />
@@ -88,9 +87,11 @@
     <None Include="Assets\VFX\Eric VFX Studio\Resource\Shader\AlphaBlendFlow.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Overlay.shader" />
+    <None Include="Assets\VFX\Matthew Guz\Slash Effects FREE\Documentation\Readme IMPORTANT.txt" />
     <None Include="Assets\VFX\JMO Assets\Cartoon FX Remaster\CFXR Assets\Shaders\CFXR_SETTINGS.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap.shader" />
     <None Include="Assets\VFX\SimpleFX\Materials\UnlitVertexColour_Alpha.shader" />
+    <None Include="Assets\Houidisoft technology\Readme.txt" />
     <None Include="Assets\VFX\JMO Assets\Cartoon FX Remaster\CFXR Assets\Shaders\CFXR.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Mobile.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF SSD.shader" />
