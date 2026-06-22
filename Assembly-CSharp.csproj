@@ -66,6 +66,7 @@
     <Compile Include="Assets\Game_3D\Script\CloudMover.cs" />
     <Compile Include="Assets\VFX\VFXPACK_IMPACT_WALLCOEUR_FreeVersion\Scripts\VfxController.cs" />
     <Compile Include="Assets\VFX\Travis Game Assets\Hit Impact Effects\Demo Scene\Scripts\HitImpactEffectsPreview.cs" />
+    <Compile Include="Assets\Game_3D\Script\FixLoeTrang.cs" />
     <Compile Include="Assets\Game_3D\Character\Hitbox.cs" />
     <Compile Include="Assets\Game_3D\Bitgem\StylisedWater\URP\Scripts\Bitgem\Core\FlagEnumAttribute.cs" />
     <Compile Include="Assets\Game_3D\Enemy Mushnub Evolved\Mushnub_EvolvedAI.cs" />
