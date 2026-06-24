@@ -195,7 +195,6 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // --- HÀM NÀY PHẢI ĐỂ PUBLIC ĐỂ ANIMATION EVENT GỌI ĐƯỢC ---
     public void PlayAttackEffect()
     {
         if (attackEffectPrefab != null && effectSpawnPoint != null)
@@ -215,8 +214,7 @@ public class PlayerMovement : MonoBehaviour
         if (dashTrail != null) dashTrail.emitting = true; 
         yield return StartCoroutine(SkillMovementRoutine());
         
-        // Độ trễ trước khi hiện hiệu ứng cào
-        yield return new WaitForSeconds(0.4f); 
+        yield return new WaitForSeconds(0.7f); 
 
         if (skillEffectPrefab != null && skillEffectSpawnPoint != null)
         {
@@ -251,18 +249,58 @@ public class PlayerMovement : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Ladder")) { isClimbing = true; rb.useGravity = false; rb.velocity = Vector3.zero; }
-        if (other.CompareTag("Coin")) { coinCount++; Destroy(other.gameObject); UpdateUI(); }
+        else if (other.CompareTag("Coin")) { coinCount++; Destroy(other.gameObject); UpdateUI(); }
         else if (other.CompareTag("Star")) { starCount++; Destroy(other.gameObject); }
         else if (other.CompareTag("Crystal")) { crystalCount++; Destroy(other.gameObject); UpdateUI(); }
         else if (other.CompareTag("Key")) { keyCount++; Destroy(other.gameObject); UpdateUI(); }
+        else if (other.CompareTag("Heart")) { Heal(1); Destroy(other.gameObject); }
+        
         if (other.CompareTag("Finish")) { if (CheckWinCondition()) WinGame(); else Debug.Log("Chưa đủ vật phẩm!"); }
-        if (isUsingSkill && other.CompareTag("Enemy")) other.SendMessage("TakeDamage", skillDamage, SendMessageOptions.DontRequireReceiver);
+        
+        if (isUsingSkill && other.CompareTag("Enemy")) 
+        {
+            BossShaunAI boss = other.GetComponentInParent<BossShaunAI>();
+            if (boss != null) boss.TakeDamage(skillDamage);
+            else other.SendMessage("TakeDamage", skillDamage, SendMessageOptions.DontRequireReceiver);
+        }
+    }
+
+    private IEnumerator ActivateHitbox() 
+    { 
+        isAttacking = true; 
+        yield return new WaitForSeconds(attackDelay); 
+        punchHitbox.enabled = true; 
+
+        // QUÉT VÙNG VA CHẠM ĐỂ GỬI SÁT THƯƠNG
+        Collider[] hitEnemies = Physics.OverlapBox(punchHitbox.transform.position, punchHitbox.bounds.extents, punchHitbox.transform.rotation);
+        foreach (Collider enemy in hitEnemies)
+        {
+            if (enemy.CompareTag("Enemy"))
+            {
+                BossShaunAI boss = enemy.GetComponentInParent<BossShaunAI>();
+                if (boss != null) boss.TakeDamage(1);
+                else enemy.SendMessage("TakeDamage", 1, SendMessageOptions.DontRequireReceiver);
+            }
+        }
+
+        yield return new WaitForSeconds(0.2f); 
+        punchHitbox.enabled = false; 
+        yield return new WaitForSeconds(attackCooldown); 
+        isAttacking = false; 
+    }
+
+    public void Heal(int amount)
+    {
+        if (isDead || isWon) return;
+        currentHealth += amount;
+        if (currentHealth > maxHealth) currentHealth = maxHealth;
+        UpdateHeartUI();
     }
 
     private void UpdateUI()
     {
         if (coinText != null) coinText.text = coinCount.ToString() + "/20";
-        if (crystalText != null) crystalText.text = crystalCount.ToString() + "/2";
+        if (crystalText != null) crystalText.text = crystalCount.ToString() + "/3";
         if (keyText != null) keyText.text = keyCount.ToString() + "/1";
     }
 
@@ -299,7 +337,6 @@ public class PlayerMovement : MonoBehaviour
 
     private void Die() { isDead = true; SetAnimatorTrigger(AnimatorParamDeathTrigger); StartCoroutine(RestartGameRoutine()); }
     private IEnumerator RestartGameRoutine() { yield return new WaitForSeconds(2f); SceneManager.LoadScene(SceneManager.GetActiveScene().name); }
-    private IEnumerator ActivateHitbox() { isAttacking = true; yield return new WaitForSeconds(attackDelay); punchHitbox.enabled = true; yield return new WaitForSeconds(0.2f); punchHitbox.enabled = false; yield return new WaitForSeconds(attackCooldown); isAttacking = false; }
     private void OnCollisionEnter(Collision collision) { isGrounded = true; }
-    private bool CheckWinCondition() { return coinCount >= 20 && crystalCount >= 2 && keyCount >= 1; }
+    private bool CheckWinCondition() { return coinCount >= 20 && crystalCount >= 3 && keyCount >= 1; }
 }

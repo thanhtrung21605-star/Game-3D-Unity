@@ -11,6 +11,8 @@ TagManager:
   - Coin
   - Key
   - Ocean
+  - Heart
+  - Boss
   layers:
   - Default
   - TransparentFX

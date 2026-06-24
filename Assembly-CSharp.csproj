@@ -60,12 +60,14 @@
     <Compile Include="Assets\VFX\Matthew Guz\Slash Effects FREE\Scripts\CameraRotation.cs" />
     <Compile Include="Assets\VFX\VFXPACK_IMPACT_WALLCOEUR_FreeVersion\Scripts\DropdownController.cs" />
     <Compile Include="Assets\Game_3D\Bitgem\StylisedWater\URP\Scripts\Bitgem\VFX\StylisedWater\WaterVolumeBase.cs" />
+    <Compile Include="Assets\Game_3D\Boss Shaun\BossShaunAI.cs" />
     <Compile Include="Assets\Game_3D\Script\Ladder.cs" />
     <Compile Include="Assets\Game_3D\Script\SpringPlatform.cs" />
     <Compile Include="Assets\Game_3D\Script\Coin.cs" />
     <Compile Include="Assets\Game_3D\Script\CloudMover.cs" />
     <Compile Include="Assets\VFX\VFXPACK_IMPACT_WALLCOEUR_FreeVersion\Scripts\VfxController.cs" />
     <Compile Include="Assets\VFX\Travis Game Assets\Hit Impact Effects\Demo Scene\Scripts\HitImpactEffectsPreview.cs" />
+    <Compile Include="Assets\Game_3D\Script\HealthPickup.cs" />
     <Compile Include="Assets\Game_3D\Script\FixLoeTrang.cs" />
     <Compile Include="Assets\Game_3D\Character\Hitbox.cs" />
     <Compile Include="Assets\Game_3D\Bitgem\StylisedWater\URP\Scripts\Bitgem\Core\FlagEnumAttribute.cs" />
