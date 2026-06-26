@@ -81,6 +81,7 @@
     <Compile Include="Assets\Game_3D\Bitgem\StylisedWater\URP\Scripts\Bitgem\VFX\StylisedWater\WaterVolumeHelper.cs" />
     <Compile Include="Assets\Game_3D\CameraFollow\CameraFollow.cs" />
     <Compile Include="Assets\Game_3D\Script\SpikeTrap.cs" />
+    <Compile Include="Assets\Game_3D\Script\BombExplosion.cs" />
     <Compile Include="Assets\Game_3D\Script\WinFlag.cs" />
     <Compile Include="Assets\Game_3D\Script\Lever.cs" />
     <Compile Include="Assets\Game_3D\Bitgem\StylisedWater\URP\Scripts\Bitgem\VFX\StylisedWater\WaterVolumeBox.cs" />

@@ -3,7 +3,22 @@ guid: e4b25f86eb8a7a643b7547ea590a19e0
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Black
+    second: {fileID: 2100000, guid: 16d0e71f052528049a5111ea94455a91, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Demon_Main
+    second: {fileID: 2100000, guid: b732ecfd5d4008b48b5ccc57feec5ca3, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Eye_White
+    second: {fileID: 2100000, guid: 55d08f1d6c20c9647a66b009a72e0608, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
