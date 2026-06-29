@@ -14,17 +14,22 @@ public class CameraFollow : MonoBehaviour
 
     void Start()
     {
-        // Mình đã xóa lệnh khóa và làm tàng hình chuột ở đây
-        // Bây giờ con trỏ chuột của bạn sẽ luôn hiển thị bình thường
+        // [MỚI] Khởi tạo góc nhìn dựa trên vị trí camera hiện tại trong Scene
+        if (target != null)
+        {
+            Vector3 relativePos = transform.position - target.position;
+            currentX = transform.eulerAngles.y;
+            currentY = transform.eulerAngles.x;
+            
+            // Nếu góc X > 180, chuyển sang giá trị âm để Clamp hoạt động đúng
+            if (currentY > 180) currentY -= 360;
+        }
     }
 
     void Update()
     {
-        // Kiểm tra xem người chơi có đang BẤM GIỮ chuột trái hay không
-        // Số 0 là chuột trái, 1 là chuột phải, 2 là nút cuộn giữa
         if (Input.GetMouseButton(0))
         {
-            // Chỉ khi đang giữ chuột trái thì mới lấy tín hiệu di chuyển chuột
             currentX += Input.GetAxis("Mouse X") * sensitivity;
             currentY -= Input.GetAxis("Mouse Y") * sensitivity;
 

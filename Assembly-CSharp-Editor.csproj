@@ -58,7 +58,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Game_3D\Bitgem\StylisedWater\URP\Scripts\Bitgem\Editor\FlagEnumAttributeDrawer.cs" />
-    <Compile Include="Assets\Houidisoft technology\One Click Add Water -Stylized Water Shader\Editor\WaterToolMenu.cs" />
+    <Compile Include="Assets\VFX\Houidisoft technology\One Click Add Water -Stylized Water Shader\Editor\WaterToolMenu.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
