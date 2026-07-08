@@ -10,18 +10,27 @@ public class PlayerMovement : MonoBehaviour
     public float speed = 5f;
     public float jumpForce = 6f;
     public float climbSpeed = 3f;
+    
+    [HideInInspector] public bool isUsingSpring = false;
 
     [Header("Combat Settings")]
     public Collider punchHitbox;
     public int punchDamage = 1; 
     public Collider skillHitbox; 
     public int skillDamage = 3; 
+    public AudioClip attackSound;
+
+    [Header("Audio Settings")]
+    public AudioClip footstepSound;
+    public AudioClip jumpSound;
+    public AudioClip dashSound; 
+    public AudioClip slashSound;
 
     [Header("Spawn & Jump Effects")] 
     public GameObject spawnEffectPrefab; 
     public Vector3 spawnOffset = new Vector3(0, 0.5f, 0); 
     public float spawnEffectDuration = 1.0f;
-    public GameObject jumpEffectPrefab; // [TÍCH HỢP]
+    public GameObject jumpEffectPrefab; 
 
     public GameObject attackEffectPrefab; 
     public Transform effectSpawnPoint;
@@ -40,7 +49,7 @@ public class PlayerMovement : MonoBehaviour
     public TextMeshProUGUI keyText;
 
     [Header("Skill Cooldown UI")] 
-    public Image skillCooldownImage;            
+    public Image skillCooldownImage;               
     public TextMeshProUGUI skillCooldownText; 
 
     [Header("Heart Health UI")] 
@@ -102,6 +111,9 @@ public class PlayerMovement : MonoBehaviour
     private const string AnimatorParamHitTrigger = "HitTrigger";
     private const string AnimatorParamDeathTrigger = "DeathTrigger";
     private const string AnimatorParamSkillTrigger = "SpecialSkillTrigger"; 
+
+    // Biến quản lý hiệu ứng Flash
+    private Coroutine flashCoroutine;
 
     void Start()
     {
@@ -195,9 +207,10 @@ public class PlayerMovement : MonoBehaviour
 
         SetAnimatorBool(AnimatorParamIsRunning, isMoving);
 
-        // [TÍCH HỢP HIỆU ỨNG NHẢY]
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        if (Input.GetKeyDown(KeyCode.Space) && isGrounded && !isUsingSpring)
         {
+            if (jumpSound != null) AudioSource.PlayClipAtPoint(jumpSound, transform.position, 0.8f);
+
             SetAnimatorTrigger(AnimatorParamJumpTrigger);
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             isGrounded = false;
@@ -231,6 +244,31 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    private void OnCollisionEnter(Collision collision)
+    {
+        isGrounded = true;
+        if (collision.gameObject.CompareTag("MovingPlatform"))
+        {
+            transform.SetParent(collision.transform);
+        }
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("MovingPlatform"))
+        {
+            transform.SetParent(null);
+        }
+    }
+
+    public void PlayFootstep()
+    {
+        if (isGrounded && footstepSound != null)
+        {
+            AudioSource.PlayClipAtPoint(footstepSound, transform.position, 1.5f);
+        }
+    }
+
     public void PlayAttackEffect()
     {
         if (attackEffectPrefab != null && effectSpawnPoint != null)
@@ -246,11 +284,15 @@ public class PlayerMovement : MonoBehaviour
         isUsingSkill = true;
         lastSkillTime = Time.time;
         
+        if (dashSound != null) AudioSource.PlayClipAtPoint(dashSound, transform.position, 1.0f);
+
         SetAnimatorTrigger(AnimatorParamSkillTrigger);
         if (dashTrail != null) dashTrail.emitting = true; 
         yield return StartCoroutine(SkillMovementRoutine());
         
         yield return new WaitForSeconds(0.7f); 
+
+        if (slashSound != null) AudioSource.PlayClipAtPoint(slashSound, transform.position, 1.0f);
 
         if (skillEffectPrefab != null && skillEffectSpawnPoint != null)
         {
@@ -304,6 +346,8 @@ public class PlayerMovement : MonoBehaviour
     private IEnumerator ActivateHitbox() 
     { 
         isAttacking = true; 
+        if (attackSound != null) AudioSource.PlayClipAtPoint(attackSound, transform.position);
+
         yield return new WaitForSeconds(attackDelay); 
         punchHitbox.enabled = true; 
 
@@ -368,7 +412,8 @@ public class PlayerMovement : MonoBehaviour
         UpdateHeartUI(); 
         SetAnimatorTrigger(AnimatorParamHitTrigger); 
         
-        StartCoroutine(FlashRoutine());
+        if (flashCoroutine != null) StopCoroutine(flashCoroutine);
+        flashCoroutine = StartCoroutine(FlashRoutine());
         
         if (hitEffectPrefab != null)
         {
@@ -388,12 +433,12 @@ public class PlayerMovement : MonoBehaviour
             katRenderer.material.color = flashColor;
             yield return new WaitForSeconds(flashDuration);
             katRenderer.material.color = originalColor;
+            flashCoroutine = null;
         }
     }
 
     private void Die() { isDead = true; SetAnimatorTrigger(AnimatorParamDeathTrigger); StartCoroutine(RestartGameRoutine()); }
     private IEnumerator RestartGameRoutine() { yield return new WaitForSeconds(2f); SceneManager.LoadScene(SceneManager.GetActiveScene().name); }
-    private void OnCollisionEnter(Collision collision) { isGrounded = true; }
     
     private bool CheckWinCondition() 
     { 
