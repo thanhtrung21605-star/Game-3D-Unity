@@ -4,7 +4,6 @@ public class BombExplosion : MonoBehaviour
 {
     [Header("=== Cấu Hình Bom ===")]
     public GameObject explosionVFX; // Kéo hiệu ứng nổ vào đây
-    public AudioClip explosionSound; // [MỚI] Kéo âm thanh nổ vào đây
     public int damage = 2;          // Sát thương gây ra là 2
     public float explosionDelay = 0.1f; // Thời gian trễ trước khi xóa bom
 
@@ -29,13 +28,8 @@ public class BombExplosion : MonoBehaviour
             Instantiate(explosionVFX, transform.position, Quaternion.identity);
         }
 
-        // [MỚI] Phát âm thanh nổ tại chỗ
-        if (explosionSound != null)
-        {
-            AudioSource.PlayClipAtPoint(explosionSound, transform.position, 1.0f);
-        }
-
         // 2. Gây sát thương cho Player
+        // Giả sử script nhận sát thương của Player tên là "PlayerHealth" hoặc có hàm "TakeDamage"
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
         {

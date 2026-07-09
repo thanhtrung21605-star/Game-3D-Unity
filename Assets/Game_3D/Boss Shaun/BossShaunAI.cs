@@ -22,7 +22,7 @@ public class BossShaunAI : MonoBehaviour
 
     [Header("=== Cấu Hình Hiệu Ứng (VFX) ===")]
     public GameObject transformationVFX; 
-    public GameObject spawnVFX;          
+    public GameObject spawnVFX;         
     public GameObject deathVFXPhase1;   
     public GameObject deathVFX;         
     public float vfxDuration = 1.0f;     
@@ -47,14 +47,6 @@ public class BossShaunAI : MonoBehaviour
     public int biteDamage = 1;          
     public GameObject hitEffectPrefab; 
     public GameObject heartPrefab; 
-    public GameObject keyPrefab; 
-    
-    [Header("=== Âm Thanh ===")]
-    public AudioClip attackSound;
-    public AudioClip weaponExplosionSound; // [MỚI] Âm thanh nổ Phase 2
-
-    [Header("=== Thanh Máu ===")]
-    public EnemyHealthBar healthBar;
 
     [Header("=== Cấu Hình Tuần Tra ===")]
     public float moveSpeed = 2f;
@@ -67,7 +59,7 @@ public class BossShaunAI : MonoBehaviour
 
     [Header("=== Cấu Hình Tấn Công ===")]
     public Transform player;            
-    public float detectRange = 5f;   
+    public float detectRange = 5f;    
     public float attackRange = 2.5f;  
     public float attackCooldown = 1.5f; 
 
@@ -113,14 +105,16 @@ public class BossShaunAI : MonoBehaviour
         if (activeAnim != null) activeAnim.SetBool("isFlying", !isDead); 
     }
 
+    // [MỚI] Hàm lấy tất cả Renderer của mô hình hiện tại
     private Renderer[] GetActiveRenderers() {
         GameObject activeModel = isPhase2 ? phase2Model : phase1Model;
         return activeModel.GetComponentsInChildren<Renderer>();
     }
 
-    IEnumerator FlashRoutine() { 
+    IEnumerator FlashRoutine() {
         MaterialPropertyBlock propBlock = new MaterialPropertyBlock();
         Renderer[] renderers = GetActiveRenderers();
+        
         foreach (Renderer r in renderers) {
             if (r != null) {
                 r.GetPropertyBlock(propBlock);
@@ -138,25 +132,29 @@ public class BossShaunAI : MonoBehaviour
         if (isPerformingWeapon || currentHP <= 0) yield break; 
         Transform p = GetPlayer(); 
         if (p == null) { canAttack = true; yield break; } 
+        
         isAttacking = true; 
         canAttack = false; 
+        
         if (rb != null) rb.velocity = Vector3.zero; 
+
         Vector3 dirToPlayer = (p.position - transform.position).normalized; 
         transform.rotation = Quaternion.LookRotation(new Vector3(dirToPlayer.x, 0, dirToPlayer.z)); 
         
-        if (attackSound != null) AudioSource.PlayClipAtPoint(attackSound, transform.position, 3.0f);
-
         Animator activeAnim = GetActiveAnimator(); 
         if (activeAnim != null) {
             activeAnim.ResetTrigger("Bite"); 
             activeAnim.SetTrigger("Bite"); 
         }
+        
         yield return new WaitForSeconds(0.4f); 
+        
         Collider[] hits = Physics.OverlapSphere(transform.position + transform.forward * 1.5f, 1.5f, -1); 
         foreach (Collider hit in hits) { 
             var playerScript = hit.GetComponent<PlayerMovement>() ?? hit.GetComponentInParent<PlayerMovement>();
             if (playerScript != null) playerScript.TakeDamage(biteDamage);
         }
+        
         yield return new WaitForSeconds(attackCooldown - 0.4f); 
         canAttack = true; 
         isAttacking = false; 
@@ -222,11 +220,6 @@ public class BossShaunAI : MonoBehaviour
     IEnumerator ExecuteWeaponExplosions() { 
         for (int i = 0; i < 3; i++) { 
             Vector3 randomPos = GetRandomPointInBounds(arenaBounds); 
-            
-            // [Phát âm thanh nổ mỗi lần Instantiate]
-            if (weaponExplosionSound != null) 
-                AudioSource.PlayClipAtPoint(weaponExplosionSound, randomPos, 1.0f);
-
             if (weaponExplosionPrefab != null) { 
                 GameObject explosion = Instantiate(weaponExplosionPrefab, randomPos, Quaternion.identity); 
                 explosion.transform.localScale = Vector3.one * explosionScale; 
@@ -244,49 +237,20 @@ public class BossShaunAI : MonoBehaviour
     IEnumerator WeaponRoutine() { while (isPhase2 && !isDead) { yield return new WaitForSeconds(weaponInterval); if (currentHP <= 0) break; isPerformingWeapon = true; Animator activeAnim = GetActiveAnimator(); if (activeAnim != null) activeAnim.SetTrigger("WeaponTrigger"); StartCoroutine(ExecuteWeaponExplosions()); yield return new WaitForSeconds(weaponDuration); isPerformingWeapon = false; } }
     private Animator GetActiveAnimator() { GameObject activeModel = isPhase2 ? phase2Model : phase1Model; return activeModel != null ? activeModel.GetComponentInChildren<Animator>() : null; }
     private Vector3 GetHitEffectPosition() { GameObject activeModel = isPhase2 ? phase2Model : phase1Model; Transform hitPoint = activeModel.transform.Find("HitPoint"); return (hitPoint != null) ? hitPoint.position : transform.position + Vector3.up * 0.5f; }
-    
     public void TakeDamage(int damage) { 
         if (isDead || currentHP <= 0 || isInvulnerable) return; 
         currentHP -= damage; 
-
-        if (healthBar != null) {
-            float maxHP = isPhase2 ? hpPhase2 : hpPhase1;
-            healthBar.ShowAndHealth(currentHP, maxHP);
-        }
-
+        
+        // [MỚI] Kích hoạt chuyển đỏ
         StopCoroutine("FlashRoutine");
         StartCoroutine(FlashRoutine());
+
         if (hitEffectPrefab != null) StartCoroutine(PlayHitEffectDelayed()); 
         if (currentHP <= 0) { currentState = CrabState.Dead; if (!isPhase2) { if (deathVFXPhase1 != null) Instantiate(deathVFXPhase1, transform.position, Quaternion.identity); StartCoroutine(TransformationRoutine()); } else Die(); } else { Animator activeAnim = GetActiveAnimator(); if (activeAnim != null) activeAnim.SetTrigger("HitRecieve"); } 
     }
-
     IEnumerator PlayHitEffectDelayed() { yield return new WaitForSeconds(hitEffectDelay); GameObject effect = Instantiate(hitEffectPrefab, GetHitEffectPosition(), Quaternion.identity); effect.transform.localScale = Vector3.one * hitEffectScale; Destroy(effect, hitEffectDuration); }
-    
     IEnumerator TransformationRoutine() { isDead = true; GameObject vfxInstance = null; if (transformationVFX != null) vfxInstance = Instantiate(transformationVFX, transform.position, Quaternion.identity); Animator anim1 = phase1Model.GetComponentInChildren<Animator>(); if (anim1 != null) anim1.SetTrigger("Transform"); yield return new WaitForSeconds(2.0f); yield return new WaitForSeconds(vfxDelay); phase1Model.SetActive(false); phase2Model.SetActive(true); isPhase2 = true; currentHP = hpPhase2; isInvulnerable = true; if (invulnerabilityVFX != null) { currentInvulnerableEffect = Instantiate(invulnerabilityVFX, transform.position, Quaternion.identity); currentInvulnerableEffect.transform.SetParent(transform); currentInvulnerableEffect.transform.localScale = Vector3.one * invulnerabilityVFXScale; } if (spawnVFX != null) { GameObject spawnEffect = Instantiate(spawnVFX, transform.position, Quaternion.identity); Destroy(spawnEffect, vfxDuration); } yield return new WaitForSeconds(spawnWeaponDelay); Animator anim2 = phase2Model.GetComponentInChildren<Animator>(); if (anim2 != null) { anim2.Rebind(); anim2.SetTrigger("WeaponTrigger"); StartCoroutine(ExecuteWeaponExplosions()); } if (vfxInstance != null) Destroy(vfxInstance, vfxDuration); yield return new WaitForSeconds(invulnerabilityDuration); if (currentInvulnerableEffect != null) Destroy(currentInvulnerableEffect); isInvulnerable = false; isDead = false; weaponCycle = StartCoroutine(WeaponRoutine()); StartCoroutine(MainAIRoutine()); }
-
-    void Die() { 
-        if (isDead) return; 
-        isDead = true; 
-        StopAllCoroutines(); 
-        if (deathVFX != null) Instantiate(deathVFX, transform.position, Quaternion.identity); 
-        Collider[] cols = GetComponentsInChildren<Collider>(); 
-        foreach(Collider c in cols) c.enabled = false; 
-        Rigidbody rb = GetComponent<Rigidbody>(); 
-        if (rb != null) rb.isKinematic = true; 
-        Animator activeAnim = GetActiveAnimator(); 
-        if (activeAnim != null) { 
-            activeAnim.SetBool("isFlying", false); 
-            activeAnim.CrossFade("CharacterArmature|Death", 0.1f); 
-        } 
-        
-        if (isPhase2 && keyPrefab != null) {
-            Instantiate(keyPrefab, transform.position + Vector3.up * 0.5f, Quaternion.identity);
-        }
-
-        if (heartPrefab != null) Instantiate(heartPrefab, transform.position + Vector3.up * 0.5f, Quaternion.identity); 
-        Destroy(gameObject, 5f); 
-    }
-
+    void Die() { if (isDead) return; isDead = true; StopAllCoroutines(); if (deathVFX != null) Instantiate(deathVFX, transform.position, Quaternion.identity); Collider[] cols = GetComponentsInChildren<Collider>(); foreach(Collider c in cols) c.enabled = false; Rigidbody rb = GetComponent<Rigidbody>(); if (rb != null) rb.isKinematic = true; Animator activeAnim = GetActiveAnimator(); if (activeAnim != null) { activeAnim.SetBool("isFlying", false); activeAnim.CrossFade("CharacterArmature|Death", 0.1f); } if (heartPrefab != null) Instantiate(heartPrefab, transform.position + Vector3.up * 0.5f, Quaternion.identity); Destroy(gameObject, 5f); }
     private Transform GetPlayer() { if (player == null) { GameObject pObj = GameObject.FindGameObjectWithTag("Player"); if (pObj != null) player = pObj.transform; } return player; }
     void OnDrawGizmosSelected() { Gizmos.color = Color.yellow; Gizmos.DrawWireSphere(transform.position, detectRange); Gizmos.color = Color.red; Gizmos.DrawWireSphere(transform.position, attackRange); }
 }

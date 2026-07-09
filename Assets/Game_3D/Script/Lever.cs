@@ -3,53 +3,33 @@ using UnityEngine.Events;
 
 public class Lever : MonoBehaviour
 {
-    [Header("=== Cấu hình Cần Gạt ===")]
-    public Transform handle;           
-    public float rotationSpeed = 10f;  
-    public float rotationAngle = 180f; // [MỚI] Chỉnh độ xoay tại đây
+    [Header("Cấu hình Cần Gạt")]
     public bool isActivated = false;
-    public UnityEvent onActivate;      
-    public UnityEvent onDeactivate;    
+    public UnityEvent onActivate;   // Sự kiện chạy khi gạt xuống
+    public UnityEvent onDeactivate; // Sự kiện chạy khi gạt lên
 
-    private Quaternion startRotation;
-    private Quaternion targetRotation;
-    private bool isRotating = false;
+    private Animator anim;
 
     void Start()
     {
-        if (handle != null)
-        {
-            startRotation = handle.localRotation;
-            targetRotation = startRotation;
-        }
+        anim = GetComponent<Animator>();
     }
 
-    void Update()
-    {
-        if (isRotating && handle != null)
-        {
-            handle.localRotation = Quaternion.Lerp(handle.localRotation, targetRotation, Time.deltaTime * rotationSpeed);
-            if (Quaternion.Angle(handle.localRotation, targetRotation) < 0.1f)
-            {
-                isRotating = false;
-            }
-        }
-    }
-
+    // Hàm này được gọi khi nhân vật nhấn phím tương tác (ví dụ phím 'E')
     public void Interact()
     {
-        isActivated = !isActivated;
-        isRotating = true;
+        isActivated = !isActivated; // Đảo trạng thái
+
+        Debug.Log($"Lever.Interact: {gameObject.name} newState={isActivated}");
+
+        if (anim != null) anim.SetBool("IsOn", isActivated);
 
         if (isActivated)
         {
-            // Xoay quanh trục Z theo số độ bạn nhập vào
-            targetRotation = startRotation * Quaternion.Euler(0, 0, rotationAngle); 
-            onActivate?.Invoke();
+            onActivate?.Invoke(); // Chạy các hàm đã gán ở sự kiện onActivate
         }
         else
         {
-            targetRotation = startRotation; 
             onDeactivate?.Invoke();
         }
     }

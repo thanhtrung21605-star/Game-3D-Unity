@@ -6,31 +6,13 @@ using UnityEngine.UI;
 
 public class PlayerMovement : MonoBehaviour
 {
-    [Header("Movement Settings")]
     public float speed = 5f;
     public float jumpForce = 6f;
     public float climbSpeed = 3f;
-    
-    [HideInInspector] public bool isUsingSpring = false;
 
-    [Header("Combat Settings")]
     public Collider punchHitbox;
-    public int punchDamage = 1; 
     public Collider skillHitbox; 
     public int skillDamage = 3; 
-    public AudioClip attackSound;
-
-    [Header("Audio Settings")]
-    public AudioClip footstepSound;
-    public AudioClip jumpSound;
-    public AudioClip dashSound; 
-    public AudioClip slashSound;
-
-    [Header("Spawn & Jump Effects")] 
-    public GameObject spawnEffectPrefab; 
-    public Vector3 spawnOffset = new Vector3(0, 0.5f, 0); 
-    public float spawnEffectDuration = 1.0f;
-    public GameObject jumpEffectPrefab; 
 
     public GameObject attackEffectPrefab; 
     public Transform effectSpawnPoint;
@@ -49,7 +31,7 @@ public class PlayerMovement : MonoBehaviour
     public TextMeshProUGUI keyText;
 
     [Header("Skill Cooldown UI")] 
-    public Image skillCooldownImage;               
+    public Image skillCooldownImage;        
     public TextMeshProUGUI skillCooldownText; 
 
     [Header("Heart Health UI")] 
@@ -57,18 +39,6 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Win UI")]
     public GameObject winTextObject;
-
-    [Header("Hit Effect Settings")]
-    public Renderer katRenderer; 
-    public float flashDuration = 0.2f;
-    public Color flashColor = Color.red;
-    public GameObject hitEffectPrefab; 
-    public Transform hitEffectSpawnPoint;
-
-    [Header("Win Condition Settings")]
-    public int requiredCoins = 25;
-    public int requiredCrystals = 3;
-    public int requiredKeys = 1;
 
     public float attackDelay = 0.08f;
     public float attackCooldown = 0.14f;
@@ -112,22 +82,11 @@ public class PlayerMovement : MonoBehaviour
     private const string AnimatorParamDeathTrigger = "DeathTrigger";
     private const string AnimatorParamSkillTrigger = "SpecialSkillTrigger"; 
 
-    // Biến quản lý hiệu ứng Flash
-    private Coroutine flashCoroutine;
-
     void Start()
     {
         animator = GetComponent<Animator>();
         rb = GetComponent<Rigidbody>();
         currentHealth = maxHealth;
-        
-        if (katRenderer == null) katRenderer = GetComponentInChildren<Renderer>();
-        
-        if (spawnEffectPrefab != null)
-        {
-            GameObject spawnEffect = Instantiate(spawnEffectPrefab, transform.position + spawnOffset, Quaternion.identity);
-            Destroy(spawnEffect, spawnEffectDuration);
-        }
         
         if (skillHitbox != null) skillHitbox.enabled = false;
         if (dashTrail != null) dashTrail.emitting = false; 
@@ -207,19 +166,11 @@ public class PlayerMovement : MonoBehaviour
 
         SetAnimatorBool(AnimatorParamIsRunning, isMoving);
 
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded && !isUsingSpring)
+        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
         {
-            if (jumpSound != null) AudioSource.PlayClipAtPoint(jumpSound, transform.position, 0.8f);
-
             SetAnimatorTrigger(AnimatorParamJumpTrigger);
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             isGrounded = false;
-            
-            if (jumpEffectPrefab != null)
-            {
-                GameObject effect = Instantiate(jumpEffectPrefab, transform.position + new Vector3(0, 0.05f, 0), Quaternion.Euler(90, 0, 0));
-                Destroy(effect, 1.0f);
-            }
         }
 
         if (Input.GetMouseButtonDown(1) && !isAttacking)
@@ -244,31 +195,7 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private void OnCollisionEnter(Collision collision)
-    {
-        isGrounded = true;
-        if (collision.gameObject.CompareTag("MovingPlatform"))
-        {
-            transform.SetParent(collision.transform);
-        }
-    }
-
-    private void OnCollisionExit(Collision collision)
-    {
-        if (collision.gameObject.CompareTag("MovingPlatform"))
-        {
-            transform.SetParent(null);
-        }
-    }
-
-    public void PlayFootstep()
-    {
-        if (isGrounded && footstepSound != null)
-        {
-            AudioSource.PlayClipAtPoint(footstepSound, transform.position, 1.5f);
-        }
-    }
-
+    // --- HÀM NÀY PHẢI ĐỂ PUBLIC ĐỂ ANIMATION EVENT GỌI ĐƯỢC ---
     public void PlayAttackEffect()
     {
         if (attackEffectPrefab != null && effectSpawnPoint != null)
@@ -284,15 +211,12 @@ public class PlayerMovement : MonoBehaviour
         isUsingSkill = true;
         lastSkillTime = Time.time;
         
-        if (dashSound != null) AudioSource.PlayClipAtPoint(dashSound, transform.position, 1.0f);
-
         SetAnimatorTrigger(AnimatorParamSkillTrigger);
         if (dashTrail != null) dashTrail.emitting = true; 
         yield return StartCoroutine(SkillMovementRoutine());
         
-        yield return new WaitForSeconds(0.7f); 
-
-        if (slashSound != null) AudioSource.PlayClipAtPoint(slashSound, transform.position, 1.0f);
+        // Độ trễ trước khi hiện hiệu ứng cào
+        yield return new WaitForSeconds(0.4f); 
 
         if (skillEffectPrefab != null && skillEffectSpawnPoint != null)
         {
@@ -327,60 +251,19 @@ public class PlayerMovement : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Ladder")) { isClimbing = true; rb.useGravity = false; rb.velocity = Vector3.zero; }
-        else if (other.CompareTag("Coin")) { coinCount++; Destroy(other.gameObject); UpdateUI(); }
+        if (other.CompareTag("Coin")) { coinCount++; Destroy(other.gameObject); UpdateUI(); }
         else if (other.CompareTag("Star")) { starCount++; Destroy(other.gameObject); }
         else if (other.CompareTag("Crystal")) { crystalCount++; Destroy(other.gameObject); UpdateUI(); }
         else if (other.CompareTag("Key")) { keyCount++; Destroy(other.gameObject); UpdateUI(); }
-        else if (other.CompareTag("Heart")) { Heal(1); Destroy(other.gameObject); }
-        
         if (other.CompareTag("Finish")) { if (CheckWinCondition()) WinGame(); else Debug.Log("Chưa đủ vật phẩm!"); }
-        
-        if (isUsingSkill && other.CompareTag("Enemy")) 
-        {
-            BossShaunAI boss = other.GetComponentInParent<BossShaunAI>();
-            if (boss != null) boss.TakeDamage(skillDamage);
-            else other.SendMessage("TakeDamage", skillDamage, SendMessageOptions.DontRequireReceiver);
-        }
-    }
-
-    private IEnumerator ActivateHitbox() 
-    { 
-        isAttacking = true; 
-        if (attackSound != null) AudioSource.PlayClipAtPoint(attackSound, transform.position);
-
-        yield return new WaitForSeconds(attackDelay); 
-        punchHitbox.enabled = true; 
-
-        Collider[] hitEnemies = Physics.OverlapBox(punchHitbox.transform.position, punchHitbox.bounds.extents, punchHitbox.transform.rotation);
-        foreach (Collider enemy in hitEnemies)
-        {
-            if (enemy.CompareTag("Enemy"))
-            {
-                BossShaunAI boss = enemy.GetComponentInParent<BossShaunAI>();
-                if (boss != null) boss.TakeDamage(punchDamage); 
-                else enemy.SendMessage("TakeDamage", punchDamage, SendMessageOptions.DontRequireReceiver); 
-            }
-        }
-
-        yield return new WaitForSeconds(0.2f); 
-        punchHitbox.enabled = false; 
-        yield return new WaitForSeconds(attackCooldown); 
-        isAttacking = false; 
-    }
-
-    public void Heal(int amount)
-    {
-        if (isDead || isWon) return;
-        currentHealth += amount;
-        if (currentHealth > maxHealth) currentHealth = maxHealth;
-        UpdateHeartUI();
+        if (isUsingSkill && other.CompareTag("Enemy")) other.SendMessage("TakeDamage", skillDamage, SendMessageOptions.DontRequireReceiver);
     }
 
     private void UpdateUI()
     {
-        if (coinText != null) coinText.text = coinCount.ToString() + "/" + requiredCoins;
-        if (crystalText != null) crystalText.text = crystalCount.ToString() + "/" + requiredCrystals;
-        if (keyText != null) keyText.text = keyCount.ToString() + "/" + requiredKeys;
+        if (coinText != null) coinText.text = coinCount.ToString() + "/20";
+        if (crystalText != null) crystalText.text = crystalCount.ToString() + "/2";
+        if (keyText != null) keyText.text = keyCount.ToString() + "/1";
     }
 
     private void UpdateHeartUI()
@@ -411,37 +294,12 @@ public class PlayerMovement : MonoBehaviour
         currentHealth -= damage; 
         UpdateHeartUI(); 
         SetAnimatorTrigger(AnimatorParamHitTrigger); 
-        
-        if (flashCoroutine != null) StopCoroutine(flashCoroutine);
-        flashCoroutine = StartCoroutine(FlashRoutine());
-        
-        if (hitEffectPrefab != null)
-        {
-            Vector3 spawnPos = (hitEffectSpawnPoint != null) ? hitEffectSpawnPoint.position : transform.position + Vector3.up;
-            GameObject effect = Instantiate(hitEffectPrefab, spawnPos, Quaternion.identity);
-            Destroy(effect, 1.0f);
-        }
-        
         if (currentHealth <= 0) Die(); 
-    }
-
-    IEnumerator FlashRoutine()
-    {
-        if (katRenderer != null)
-        {
-            Color originalColor = katRenderer.material.color;
-            katRenderer.material.color = flashColor;
-            yield return new WaitForSeconds(flashDuration);
-            katRenderer.material.color = originalColor;
-            flashCoroutine = null;
-        }
     }
 
     private void Die() { isDead = true; SetAnimatorTrigger(AnimatorParamDeathTrigger); StartCoroutine(RestartGameRoutine()); }
     private IEnumerator RestartGameRoutine() { yield return new WaitForSeconds(2f); SceneManager.LoadScene(SceneManager.GetActiveScene().name); }
-    
-    private bool CheckWinCondition() 
-    { 
-        return coinCount >= requiredCoins && crystalCount >= requiredCrystals && keyCount >= requiredKeys; 
-    }
+    private IEnumerator ActivateHitbox() { isAttacking = true; yield return new WaitForSeconds(attackDelay); punchHitbox.enabled = true; yield return new WaitForSeconds(0.2f); punchHitbox.enabled = false; yield return new WaitForSeconds(attackCooldown); isAttacking = false; }
+    private void OnCollisionEnter(Collision collision) { isGrounded = true; }
+    private bool CheckWinCondition() { return coinCount >= 20 && crystalCount >= 2 && keyCount >= 1; }
 }
