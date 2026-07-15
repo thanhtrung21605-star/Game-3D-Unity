@@ -17651,6 +17651,25 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c2391e8a6bdf5424194b61e41952a40a, type: 3}
+--- !u!1 &2121713382 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 745171279288394012, guid: c1740aefa3ea84146a689de4f19abd7c, type: 3}
+  m_PrefabInstance: {fileID: 487539567290435103}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2121713383
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2121713382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9daa2c4959586234cb502ddea20d6b41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pickupVFXPrefab: {fileID: 447409866740539227, guid: da34d66431c8cd04aa98411a543a83bf, type: 3}
+  effectOffset: {x: 0, y: 1.5, z: 0}
 --- !u!4 &2128158678 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6552795840466892954, guid: e500a48cf6b1d1341aa34cc9ef865cf4, type: 3}
@@ -18649,6 +18668,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 8300000, guid: 593dfb0e0d5b3184fa3a137c6f52f2d3, type: 3}
     - target: {fileID: 6928295273768771765, guid: c1740aefa3ea84146a689de4f19abd7c, type: 3}
+      propertyPath: spawnSound
+      value: 
+      objectReference: {fileID: 8300000, guid: aea6b0f9793ae574da1f45b5358c5146, type: 3}
+    - target: {fileID: 6928295273768771765, guid: c1740aefa3ea84146a689de4f19abd7c, type: 3}
       propertyPath: attackSound
       value: 
       objectReference: {fileID: 8300000, guid: 593dfb0e0d5b3184fa3a137c6f52f2d3, type: 3}
@@ -18693,6 +18716,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 6331275906715107345, guid: 690951f4781b19649bc5c7892414ff37, type: 3}
     - target: {fileID: 6928295273768771765, guid: c1740aefa3ea84146a689de4f19abd7c, type: 3}
+      propertyPath: hitEffectPrefab
+      value: 
+      objectReference: {fileID: 6823200998282874702, guid: 8f8fe12323625f5499b2853dd2ad3e58, type: 3}
+    - target: {fileID: 6928295273768771765, guid: c1740aefa3ea84146a689de4f19abd7c, type: 3}
       propertyPath: heartPickupSound
       value: 
       objectReference: {fileID: 8300000, guid: a961eba77e28e9843870cd1f31ff0a26, type: 3}
@@ -18716,6 +18743,10 @@ PrefabInstance:
       propertyPath: skillCooldownImage
       value: 
       objectReference: {fileID: 957809355}
+    - target: {fileID: 6928295273768771765, guid: c1740aefa3ea84146a689de4f19abd7c, type: 3}
+      propertyPath: hitEffectSpawnPoint
+      value: 
+      objectReference: {fileID: 487539567290435104}
     - target: {fileID: 6928295273768771765, guid: c1740aefa3ea84146a689de4f19abd7c, type: 3}
       propertyPath: spawnEffectDuration
       value: 1.5
@@ -18747,8 +18778,16 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 745171279288394012, guid: c1740aefa3ea84146a689de4f19abd7c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2121713383}
   m_SourcePrefab: {fileID: 100100000, guid: c1740aefa3ea84146a689de4f19abd7c, type: 3}
+--- !u!4 &487539567290435104 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1976336006896765303, guid: c1740aefa3ea84146a689de4f19abd7c, type: 3}
+  m_PrefabInstance: {fileID: 487539567290435103}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &503188071077672544
 GameObject:
   m_ObjectHideFlags: 0
@@ -30530,6 +30569,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 617151619}
     - target: {fileID: 6551799827032757674, guid: 6568caa7b3ccb3348a537898cca15ca7, type: 3}
+      propertyPath: attackSound
+      value: 
+      objectReference: {fileID: 8300000, guid: d3cf858c6b2366a4180e6843ba761976, type: 3}
+    - target: {fileID: 6551799827032757674, guid: 6568caa7b3ccb3348a537898cca15ca7, type: 3}
       propertyPath: flashColor.b
       value: 0.4392157
       objectReference: {fileID: 0}
@@ -31366,6 +31409,10 @@ PrefabInstance:
       propertyPath: healthBar
       value: 
       objectReference: {fileID: 4202459}
+    - target: {fileID: 3832489905796505323, guid: 267a773d0f22aa244b9c46564cc38080, type: 3}
+      propertyPath: attackSound
+      value: 
+      objectReference: {fileID: 8300000, guid: d3cf858c6b2366a4180e6843ba761976, type: 3}
     - target: {fileID: 3832489905796505323, guid: 267a773d0f22aa244b9c46564cc38080, type: 3}
       propertyPath: flashColor.b
       value: 0.4392157

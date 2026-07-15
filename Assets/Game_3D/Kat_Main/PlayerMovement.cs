@@ -28,6 +28,7 @@ public class PlayerMovement : MonoBehaviour
     public AudioClip fallSound; // Âm thanh khi ngã
     public AudioClip hitSound;  // Âm thanh khi bị đánh
     public AudioClip heartPickupSound; // Âm thanh khi nhặt máu
+    public AudioClip spawnSound; // Âm thanh khi xuất hiện
 
     [Header("Pickup Effects")]
     public GameObject heartPickupVFX; // Hiệu ứng khi nhặt máu
@@ -55,7 +56,7 @@ public class PlayerMovement : MonoBehaviour
     public TextMeshProUGUI keyText;
 
     [Header("Skill Cooldown UI")] 
-    public Image skillCooldownImage;               
+    public Image skillCooldownImage;                
     public TextMeshProUGUI skillCooldownText; 
 
     [Header("Heart Health UI")] 
@@ -132,6 +133,12 @@ public class PlayerMovement : MonoBehaviour
         {
             GameObject spawnEffect = Instantiate(spawnEffectPrefab, transform.position + spawnOffset, Quaternion.identity);
             Destroy(spawnEffect, spawnEffectDuration);
+        }
+
+        // Phát âm thanh khi xuất hiện
+        if (spawnSound != null)
+        {
+            AudioSource.PlayClipAtPoint(spawnSound, transform.position, 1.0f);
         }
         
         if (skillHitbox != null) skillHitbox.enabled = false;

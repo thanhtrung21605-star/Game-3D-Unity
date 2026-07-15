@@ -5310,27 +5310,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!65 &1493918416671994121
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5963760493385236438}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1.44, y: 1.03, z: 1.4}
-  m_Center: {x: 4.8572252e-18, y: 0.17499997, z: -1.2434497e-15}
 --- !u!23 &1496005452993793365
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -25421,9 +25400,9 @@ GameObject:
   - component: {fileID: 289698383024022188}
   - component: {fileID: 7119457181217208276}
   - component: {fileID: 6167144090782404870}
-  - component: {fileID: 1493918416671994121}
   - component: {fileID: 260647306328359559}
   - component: {fileID: 6182238358268930618}
+  - component: {fileID: 7364095490901830219}
   m_Layer: 0
   m_Name: lever
   m_TagString: Untagged
@@ -30760,6 +30739,27 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 19
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &7364095490901830219
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5963760493385236438}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 1.31
+  m_Center: {x: 4.6924666e-18, y: 0.17499997, z: 1.8973536e-20}
 --- !u!1 &7385611932667241981
 GameObject:
   m_ObjectHideFlags: 0
@@ -36352,6 +36352,7 @@ MonoBehaviour:
   fallSound: {fileID: 8300000, guid: 8cc190d486ef91c45a5038d8d061f13d, type: 3}
   hitSound: {fileID: 8300000, guid: a134f1be45cba4d44adc0e1e361795d0, type: 3}
   heartPickupSound: {fileID: 8300000, guid: aea6b0f9793ae574da1f45b5358c5146, type: 3}
+  spawnSound: {fileID: 8300000, guid: aea6b0f9793ae574da1f45b5358c5146, type: 3}
   heartPickupVFX: {fileID: 6331275906715107345, guid: 690951f4781b19649bc5c7892414ff37, type: 3}
   spawnEffectPrefab: {fileID: 3280519133390621005, guid: a71be3e7990efb040a07565c43cbb198, type: 3}
   spawnOffset: {x: 0, y: 0, z: 0}
