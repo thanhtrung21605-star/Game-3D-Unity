@@ -25,6 +25,12 @@ public class PlayerMovement : MonoBehaviour
     public AudioClip jumpSound;
     public AudioClip dashSound; 
     public AudioClip slashSound;
+    public AudioClip fallSound; // Âm thanh khi ngã
+    public AudioClip hitSound;  // Âm thanh khi bị đánh
+    public AudioClip heartPickupSound; // Âm thanh khi nhặt máu
+
+    [Header("Pickup Effects")]
+    public GameObject heartPickupVFX; // Hiệu ứng khi nhặt máu
 
     [Header("Spawn & Jump Effects")] 
     public GameObject spawnEffectPrefab; 
@@ -112,7 +118,6 @@ public class PlayerMovement : MonoBehaviour
     private const string AnimatorParamDeathTrigger = "DeathTrigger";
     private const string AnimatorParamSkillTrigger = "SpecialSkillTrigger"; 
 
-    // Biến quản lý hiệu ứng Flash
     private Coroutine flashCoroutine;
 
     void Start()
@@ -371,6 +376,19 @@ public class PlayerMovement : MonoBehaviour
     public void Heal(int amount)
     {
         if (isDead || isWon) return;
+        
+        // [CẬP NHẬT] Tạo hiệu ứng dính vào Kat (transform làm parent)
+        if (heartPickupVFX != null)
+        {
+            GameObject vfx = Instantiate(heartPickupVFX, transform.position, Quaternion.identity, transform);
+            Destroy(vfx, 1.0f);
+        }
+        
+        if (heartPickupSound != null)
+        {
+            AudioSource.PlayClipAtPoint(heartPickupSound, transform.position, 1.0f);
+        }
+
         currentHealth += amount;
         if (currentHealth > maxHealth) currentHealth = maxHealth;
         UpdateHeartUI();
@@ -408,6 +426,12 @@ public class PlayerMovement : MonoBehaviour
     public void TakeDamage(int damage) 
     { 
         if (isDead || isWon) return; 
+        
+        if (hitSound != null) 
+        {
+            AudioSource.PlayClipAtPoint(hitSound, transform.position, 1.0f);
+        }
+
         currentHealth -= damage; 
         UpdateHeartUI(); 
         SetAnimatorTrigger(AnimatorParamHitTrigger); 
@@ -437,7 +461,21 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private void Die() { isDead = true; SetAnimatorTrigger(AnimatorParamDeathTrigger); StartCoroutine(RestartGameRoutine()); }
+    private void Die() 
+    { 
+        if (isDead) return; 
+        
+        isDead = true; 
+        
+        if (fallSound != null) 
+        {
+            AudioSource.PlayClipAtPoint(fallSound, transform.position, 1.0f);
+        }
+
+        SetAnimatorTrigger(AnimatorParamDeathTrigger); 
+        StartCoroutine(RestartGameRoutine()); 
+    }
+
     private IEnumerator RestartGameRoutine() { yield return new WaitForSeconds(2f); SceneManager.LoadScene(SceneManager.GetActiveScene().name); }
     
     private bool CheckWinCondition() 
